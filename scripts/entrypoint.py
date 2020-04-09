@@ -23,7 +23,7 @@ def get_ldap_time_format(dt):
 
 def main():
     manager = get_manager()
-    host = os.environ.get("GLUU_LDAP_URL", "localhost:1636")
+    GLUU_LDAP_URL = os.environ.get("GLUU_LDAP_URL", "localhost:1636")
     user = manager.config.get("ldap_binddn")
     password = decode_text(
         manager.secret.get("encoded_ox_ldap_pw"),
@@ -31,7 +31,7 @@ def main():
     )
 
     offset = 0
-    ldap_server = Server('ldaps://{}:1636'.format(host), use_ssl=True)
+    ldap_server = Server(GLUU_LDAP_URL, port=1636, use_ssl=True)
     ldap_conn = Connection(ldap_server, user=user, password=password)
     ldap_conn.bind()
 
@@ -42,25 +42,24 @@ def main():
     ]
 
     try:
-        while True:
-            for base in base_dn:
-                t_s = time.time()
-                cur_time = get_ldap_time_format(datetime.datetime.now() + datetime.timedelta(seconds=offset))
-                search_filter = '(&(|(oxAuthExpiration<={0})(exp<={0}))(del=true))'.format(cur_time)
-                logger.info("Searching expired cache entries for {}".format(base))
-                ldap_conn.search(
-                    search_base=base,
-                    search_scope=SUBTREE,
-                    search_filter=search_filter,
-                    attributes=[]
-                )
-                response = ldap_conn.response
-                if response:
-                    logger.info("Deleting {} entries".format(len(response)))
-                    for e in response:
-                        ldap_conn.delete(e['dn'])
-                    t_e = time.time()
-                    logger.info("Cleanup {} took {:0.2f}s".format(base, t_e - t_s))
+        for base in base_dn:
+            t_s = time.time()
+            cur_time = get_ldap_time_format(datetime.datetime.now() + datetime.timedelta(seconds=offset))
+            search_filter = '(&(|(oxAuthExpiration<={0})(exp<={0}))(del=true))'.format(cur_time)
+            logger.info("Searching expired cache entries for {}".format(base))
+            ldap_conn.search(
+                search_base=base,
+                search_scope=SUBTREE,
+                search_filter=search_filter,
+                attributes=[]
+            )
+            response = ldap_conn.response
+            if response:
+                logger.info("Deleting {} entries".format(len(response)))
+                for e in response:
+                    ldap_conn.delete(e['dn'])
+                t_e = time.time()
+                logger.info("Cleanup {} took {:0.2f}s".format(base, t_e - t_s))
 
     except KeyboardInterrupt:
         logger.warning("Canceled by user; exiting ...")

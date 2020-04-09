@@ -1,0 +1,18 @@
+kind: CronJob
+apiVersion: batch/v1beta1
+metadata:
+  name: ldap-cache-cleaner
+spec:
+  schedule: "*/5 * * * *"
+  concurrencyPolicy: Forbid
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          containers:
+            - name: ldap-cache-cleaner
+              image: docker.io/gluufederation/ldap-cache-cleaner:4.1.1_dev
+              envFrom:
+                - configMapRef:
+                    name: ldap-cache-cleaner-cm
+          restartPolicy: Never

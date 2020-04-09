@@ -1,0 +1,25 @@
+# License terms and conditions:
+# https://www.gluu.org/license/enterprise-edition/
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+commonLabels:
+  app: ldap-cache-cleaner
+resources:
+  - cronjob.yaml
+images:
+  - name: gluufederation/cr-rotate
+    newTag: 4.1.0_01
+configMapGenerator:
+  - name: ldap-cache-cleaner-cm
+    literals:
+      - GLUU_CONFIG_KUBERNETES_NAMESPACE="default"
+      - GLUU_SECRET_KUBERNETES_NAMESPACE="default"
+      - GLUU_CONFIG_ADAPTER="kubernetes"
+      - GLUU_SECRET_ADAPTER="kubernetes"
+      - GLUU_CONTAINER_METADATA="kubernetes"
+      # options: ldap/hybrid
+      - GLUU_PERSISTENCE_TYPE=PERSISTENCETYPE
+      # options: default/user/site/cache/statistic; used only if GLUU_PERSISTENCE_TYPE is hybrid
+      - GLUU_PERSISTENCE_LDAP_MAPPING=LDAPMAPPING
+      # used only if GLUU_PERSISTENCE_TYPE is ldap or hybrid
+      - GLUU_LDAP_URL="opendj:1636"
