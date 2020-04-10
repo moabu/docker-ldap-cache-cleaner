@@ -25,15 +25,11 @@ def main():
     manager = get_manager()
     GLUU_LDAP_URL = os.environ.get("GLUU_LDAP_URL", "localhost:1636")
     user = manager.config.get("ldap_binddn")
+    ldap_peers = manager.config.get("ldap_peers")
     password = decode_text(
         manager.secret.get("encoded_ox_ldap_pw"),
         manager.secret.get("encoded_salt"),
     )
-
-    offset = 0
-    ldap_server = Server(GLUU_LDAP_URL, port=1636, use_ssl=True)
-    ldap_conn = Connection(ldap_server, user=user, password=password)
-    ldap_conn.bind()
 
     base_dn = [
         'ou=uma,o=gluu', 'ou=clients,o=gluu', 'ou=authorizations,o=gluu',
@@ -42,24 +38,29 @@ def main():
     ]
 
     try:
-        for base in base_dn:
-            t_s = time.time()
-            cur_time = get_ldap_time_format(datetime.datetime.now() + datetime.timedelta(seconds=offset))
-            search_filter = '(&(|(oxAuthExpiration<={0})(exp<={0}))(del=true))'.format(cur_time)
-            logger.info("Searching expired cache entries for {}".format(base))
-            ldap_conn.search(
-                search_base=base,
-                search_scope=SUBTREE,
-                search_filter=search_filter,
-                attributes=[]
-            )
-            response = ldap_conn.response
-            if response:
-                logger.info("Deleting {} entries".format(len(response)))
-                for e in response:
-                    ldap_conn.delete(e['dn'])
-                t_e = time.time()
-                logger.info("Cleanup {} took {:0.2f}s".format(base, t_e - t_s))
+        for ldap_peer in ldap_peers:
+            offset = 0
+            ldap_server = Server(ldap_peer, port=1636, use_ssl=True)
+            ldap_conn = Connection(ldap_server, user=user, password=password)
+            ldap_conn.bind()
+            for base in base_dn:
+                t_s = time.time()
+                cur_time = get_ldap_time_format(datetime.datetime.now() + datetime.timedelta(seconds=offset))
+                search_filter = '(&(|(oxAuthExpiration<={0})(exp<={0}))(del=true))'.format(cur_time)
+                logger.info("Searching expired cache entries for {} at {}".format(base, str(ldap_peer)))
+                ldap_conn.search(
+                    search_base=base,
+                    search_scope=SUBTREE,
+                    search_filter=search_filter,
+                    attributes=[]
+                )
+                response = ldap_conn.response
+                if response:
+                    logger.info("Deleting {} entries".format(len(response)))
+                    for e in response:
+                        ldap_conn.delete(e['dn'])
+                    t_e = time.time()
+                    logger.info("Cleanup {} took {:0.2f}s".format(base, t_e - t_s))
 
     except KeyboardInterrupt:
         logger.warning("Canceled by user; exiting ...")
