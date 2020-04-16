@@ -8,6 +8,8 @@ RUN apk update \
     && apk add --no-cache py-pip \
     && apk add --no-cache --virtual build-deps wget git
 
+RUN pip install joblib
+
 # ====
 # Tini
 # ====
@@ -94,18 +96,17 @@ ENV GLUU_CONTAINER_METADATA=docker \
 # misc stuff
 # ==========
 
-LABEL name="CacheRefreshRotate" \
+LABEL name="LDAPCacheCleaner" \
     maintainer="Gluu Inc. <support@gluu.org>" \
     vendor="Gluu Federation" \
     version="4.1.1" \
     release="01" \
     summary="Gluu LDAPCacheCleaner" \
-    description="Manage CacheRefresh IP rotation"
+    description="Clean cache entries in LDAP"
 
 COPY scripts /app/scripts
 
-RUN mkdir -p /etc/certs /cr /etc/gluu/conf \
-    && chmod +x /app/scripts/entrypoint.sh
+RUN chmod +x /app/scripts/entrypoint.sh
 
 ENTRYPOINT ["tini", "-g", "--"]
 CMD ["sh", "/app/scripts/entrypoint.sh"]
