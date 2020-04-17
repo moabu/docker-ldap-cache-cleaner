@@ -92,6 +92,13 @@ ENV GLUU_CONTAINER_METADATA=docker \
     GLUU_WAIT_MAX_TIME=300 \
     GLUU_WAIT_SLEEP_DURATION=10
 
+# ================
+# Ldap Cleaner ENV
+# ================
+
+ENV PROCESS_TIMEOUT=300 \
+    TOTAL_RUN_TIME=300
+
 # ==========
 # misc stuff
 # ==========
