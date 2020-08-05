@@ -8,6 +8,10 @@ RUN apk update \
     && apk add --no-cache py-pip \
     && apk add --no-cache --virtual build-deps wget git
 
+# ===============
+# Install python packages
+# ===============
+
 RUN pip install joblib
 
 # ====
