@@ -5,13 +5,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v2
-    - name: Build the Docker image
+    - name: Build the Container image
       run: docker build . --file Dockerfile --tag localbuild/testimage:latest
-    - uses: anchore/scan-action@v2
-      with:
-        image-reference: "localbuild/testimage:latest"
-        dockerfile-path: "Dockerfile"
-        fail-build: true
     - uses: anchore/scan-action@v2
       id: scan
       with:
